@@ -2,9 +2,12 @@ package me.haile.androidlabs.exoplayer
 
 import android.annotation.SuppressLint
 import android.os.Bundle
+import android.util.Log
 import android.view.View.*
 import androidx.appcompat.app.AppCompatActivity
+import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.MediaItem
+import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.SimpleExoPlayer
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector
 import com.google.android.exoplayer2.util.MimeTypes
@@ -12,8 +15,11 @@ import com.google.android.exoplayer2.util.Util
 import me.haile.androidlabs.R
 import me.haile.androidlabs.databinding.ActivityExoPlayerBinding
 
+private const val TAG = "PlayerActivity"
+
 class ExoPlayerActivity : AppCompatActivity() {
 
+    private val playbackStateListener: Player.Listener = playbackStateListener()
     private lateinit var binding: ActivityExoPlayerBinding
 
     private var player: SimpleExoPlayer? = null
@@ -94,6 +100,7 @@ class ExoPlayerActivity : AppCompatActivity() {
                 exoPlayer.setMediaItem(mediaItem)
                 exoPlayer.playWhenReady = playWhenReady
                 exoPlayer.seekTo(currentWindow, playbackPosition)
+                exoPlayer.addListener(playbackStateListener)
                 exoPlayer.prepare()
             }
     }
@@ -103,6 +110,7 @@ class ExoPlayerActivity : AppCompatActivity() {
             playbackPosition = this.currentPosition
             currentWindow = this.currentWindowIndex
             playWhenReady = this.playWhenReady
+            removeListener(playbackStateListener)
             release()
         }
         player = null
@@ -118,3 +126,17 @@ class ExoPlayerActivity : AppCompatActivity() {
                 or SYSTEM_UI_FLAG_HIDE_NAVIGATION)
     }
 }
+
+private fun playbackStateListener() = object : Player.Listener {
+    override fun onPlaybackStateChanged(playbackState: Int) {
+        val stateString: String = when (playbackState) {
+            ExoPlayer.STATE_IDLE -> "ExoPlayer.STATE_IDLE      -"
+            ExoPlayer.STATE_BUFFERING -> "ExoPlayer.STATE_BUFFERING -"
+            ExoPlayer.STATE_READY -> "ExoPlayer.STATE_READY     -"
+            ExoPlayer.STATE_ENDED -> "ExoPlayer.STATE_ENDED     -"
+            else -> "UNKNOWN_STATE             -"
+        }
+        Log.d(TAG, "changed state to $stateString")
+    }
+}
+
