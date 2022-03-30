@@ -2,10 +2,12 @@ package me.haile.androidlabs.exoplayer
 
 import android.annotation.SuppressLint
 import android.os.Bundle
-import android.view.View
+import android.view.View.*
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.SimpleExoPlayer
+import com.google.android.exoplayer2.trackselection.DefaultTrackSelector
+import com.google.android.exoplayer2.util.MimeTypes
 import com.google.android.exoplayer2.util.Util
 import me.haile.androidlabs.R
 import me.haile.androidlabs.databinding.ActivityExoPlayerBinding
@@ -14,7 +16,7 @@ class ExoPlayerActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityExoPlayerBinding
 
-    private var player : SimpleExoPlayer? = null
+    private var player: SimpleExoPlayer? = null
 
     private var playWhenReady = true
     private var currentWindow = 0
@@ -57,13 +59,38 @@ class ExoPlayerActivity : AppCompatActivity() {
         }
     }
 
+//    private fun initializePlayer() {
+//        player = SimpleExoPlayer
+//            .Builder(this)
+//            .build()
+//            .also { exoPlayer ->
+//                binding.videoView.player = exoPlayer
+//
+//                val mediaItem = MediaItem.fromUri(getString(R.string.media_url_mp4))
+//                exoPlayer.setMediaItem(mediaItem)
+//                val secondMediaItem = MediaItem.fromUri(getString(R.string.media_url_mp3))
+//                exoPlayer.setMediaItem(secondMediaItem)
+//                exoPlayer.playWhenReady = playWhenReady
+//                exoPlayer.seekTo(currentWindow, playbackPosition)
+//                exoPlayer.prepare()
+//            }
+//    }
+
     private fun initializePlayer() {
-        player = SimpleExoPlayer
-            .Builder(this)
-            .build()
-            .also { exoPlayer ->
+        val trackSelector = DefaultTrackSelector(this).apply {
+            setParameters(buildUponParameters().setMaxVideoSizeSd())
+        }
+
+        player = SimpleExoPlayer.Builder(this)
+            .setTrackSelector(trackSelector)
+            .build().also { exoPlayer ->
                 binding.videoView.player = exoPlayer
-                val mediaItem = MediaItem.fromUri(getString(R.string.media_url_mp3))
+
+                val mediaItem = MediaItem.Builder()
+                    .setUri(getString(R.string.media_url_dash))
+                    .setMimeType(MimeTypes.APPLICATION_MPD)
+                    .build()
+
                 exoPlayer.setMediaItem(mediaItem)
                 exoPlayer.playWhenReady = playWhenReady
                 exoPlayer.seekTo(currentWindow, playbackPosition)
@@ -73,6 +100,9 @@ class ExoPlayerActivity : AppCompatActivity() {
 
     private fun releasePlayer() {
         player?.run {
+            playbackPosition = this.currentPosition
+            currentWindow = this.currentWindowIndex
+            playWhenReady = this.playWhenReady
             release()
         }
         player = null
@@ -80,11 +110,11 @@ class ExoPlayerActivity : AppCompatActivity() {
 
     @SuppressLint("InlinedApi")
     private fun hideSystemUi() {
-        binding.videoView.systemUiVisibility = (View.SYSTEM_UI_FLAG_LOW_PROFILE
-                or View.SYSTEM_UI_FLAG_FULLSCREEN
-                or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION)
+        binding.videoView.systemUiVisibility = (SYSTEM_UI_FLAG_LOW_PROFILE
+                or SYSTEM_UI_FLAG_FULLSCREEN
+                or SYSTEM_UI_FLAG_LAYOUT_STABLE
+                or SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                or SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                or SYSTEM_UI_FLAG_HIDE_NAVIGATION)
     }
 }
